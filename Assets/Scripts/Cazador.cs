@@ -1,9 +1,11 @@
+using IA2;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Cazador : MonoBehaviour
 {
+
     [Header("Properties")]
     [SerializeField] private float _maxSpeed;
     [Range(0.01f, 1f)]
@@ -23,7 +25,6 @@ public class Cazador : MonoBehaviour
 
     private Vector3 _velocity;
     private float _currentStamina;
-    private StateMachine _sm;
 
     public float IdleTime { get => _idleTime; set => _idleTime = value; }
     public float MaxForce { get => _maxForce; set => _maxForce = value; }
@@ -38,13 +39,11 @@ public class Cazador : MonoBehaviour
 
     private void Awake()
     {
-        _sm = GetComponent<StateMachine>();
+        //_sm.AddState("PatrolState", new PatrolState(this, _sm));
+        //_sm.AddState("IdleState", new IdleState(this, _sm));
+        //_sm.AddState("ChaseState", new ChaseState(this, _sm));
 
-        _sm.AddState("PatrolState", new PatrolState(this, _sm));
-        _sm.AddState("IdleState", new IdleState(this, _sm));
-        _sm.AddState("ChaseState", new ChaseState(this, _sm));
-
-        _sm.ChangeState("PatrolState");
+        //_sm.ChangeState("PatrolState");
 
         _currentStamina = _stamina;
     }
@@ -52,7 +51,7 @@ public class Cazador : MonoBehaviour
     private void Update()
     {
         CheckBounds();
-        _sm.ManualUpdate();
+        //_sm.ManualUpdate();
     }
 
     public void SetVelocity(Vector3 newVelocity)
