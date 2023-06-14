@@ -58,9 +58,10 @@ public class Boid : MonoBehaviour
         else
         {
             Collider[] colliders = Physics.OverlapSphere(transform.position, _viewRadius, 1 << 7);
+            //en vez de overlap, usar solo los que me corresponden segun spatialgrid
 
             if (colliders.Length > 0)
-                AddForce(Arrive(colliders[0].transform));
+                AddForce(Arrive(colliders[0].transform)); //arrive es para la comida
             else
                 AddForce(GetSeparation(allBoids,this,_viewRadiusSeparation,CalculateSteering) * _separationWeight + 
                     GetAlignment(allBoids, this, _viewRadius, CalculateSteering) * _alignWeight + 
