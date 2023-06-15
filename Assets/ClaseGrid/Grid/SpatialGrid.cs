@@ -60,11 +60,21 @@ public class SpatialGrid : MonoBehaviour
         }
     }
 
-    //public void InitializeThisFood(GridEntity food)
-    //{
-    //    food.OnMove += UpdateEntity;
-    //    UpdateEntity(food);
-    //}
+    public void AddEntityToGrid(GridEntity e)
+    {
+        e.OnMove += UpdateEntity;
+        UpdateEntity(e);
+    }
+
+    public void RemoveEntityFromGrid(GridEntity e)
+    {
+        var currentPos = GetPositionInGrid(e.transform.position);
+        buckets[currentPos.Item1, currentPos.Item2].Remove(e);
+        lastPositions.Remove(e);
+        e.OnMove -= UpdateEntity;
+    }
+
+
 
     public void UpdateEntity(GridEntity entity) //esto se dispara en el update de gridentity
     {
