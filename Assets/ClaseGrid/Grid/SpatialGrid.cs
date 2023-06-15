@@ -60,10 +60,16 @@ public class SpatialGrid : MonoBehaviour
         }
     }
 
+    //public void InitializeThisFood(GridEntity food)
+    //{
+    //    food.OnMove += UpdateEntity;
+    //    UpdateEntity(food);
+    //}
+
     public void UpdateEntity(GridEntity entity) //esto se dispara en el update de gridentity
     {
         var lastPos = lastPositions.ContainsKey(entity) ? lastPositions[entity] : Outside;
-        var currentPos = GetPositionInGrid(entity.gameObject.transform.position);
+        var currentPos = GetPositionInGrid(entity.transform.position);
 
         //Misma posición, no necesito hacer nada
         if (lastPos.Equals(currentPos))
@@ -88,7 +94,7 @@ public class SpatialGrid : MonoBehaviour
         var from = new Vector3(Mathf.Min(aabbFrom.x, aabbTo.x), 0, Mathf.Min(aabbFrom.z, aabbTo.z));
         var to = new Vector3(Mathf.Max(aabbFrom.x, aabbTo.x), 0, Mathf.Max(aabbFrom.z, aabbTo.z));
 
-        var fromCoord = GetPositionInGrid(from);
+        var fromCoord = GetPositionInGrid(from); //devuelve el from del query en forma de coordenadas de bucket (0,0 o 0,1, etc...)
         var toCoord = GetPositionInGrid(to);
 
         //¡Ojo que clampea a 0,0 el Outside! TODO: Checkear cuando descartar el query si estan del mismo lado
@@ -107,20 +113,20 @@ public class SpatialGrid : MonoBehaviour
 
         var cells = cols.SelectMany(
             col => rows.Select(
-                row => Tuple.Create(col, row)
+                row => Tuple.Create(col, row) //coleccion de celdas que cumplen el query
             )
         );
 
         // Iteramos las que queden dentro del criterio
         return cells
-            .SelectMany(cell => buckets[cell.Item1, cell.Item2]) //mapeo: para cada tupla x,z, una sola lista con todas las gridentities que esten en la misma bucket 
+            .SelectMany(cell => buckets[cell.Item1, cell.Item2]) //mapeo: de cada celda que cumple, una sola lista con todas las gridentities que esten en la misma bucket 
             .Where(e =>
                 from.x <= e.transform.position.x && e.transform.position.x <= to.x &&    //filtro: los gridentity que estan entre from y to
                 from.z <= e.transform.position.z && e.transform.position.z <= to.z
             ).Where(x => filterByPosition(x.transform.position)); //filtro extra por si pinta. por ej la query circular
     }
 
-    public Tuple<int, int> GetPositionInGrid(Vector3 pos)
+    public Tuple<int, int> GetPositionInGrid(Vector3 pos) //devuelve en que bucket estoy (si el 0,0  0,1  1,0  o  1,1)
     {
         //quita la diferencia, divide segun las celdas y floorea
         return Tuple.Create(Mathf.FloorToInt((pos.x - x) / cellWidth),
@@ -210,7 +216,7 @@ public class SpatialGrid : MonoBehaviour
                     connections++;
                 }
                 if(showLogs)
-                    Debug.Log("tengo " + connections + " conexiones por individuo");
+                    //Debug.Log("tengo " + connections + " conexiones por individuo");
                 connections = 0;
             }
         }
@@ -227,7 +233,7 @@ public class SpatialGrid : MonoBehaviour
                         connections++;
                     }
                     if(showLogs)
-                        Debug.Log("tengo " + connections + " conexiones por individuo");
+                        //Debug.Log("tengo " + connections + " conexiones por individuo");
                     connections = 0;
                 }
             }
@@ -238,7 +244,6 @@ public class SpatialGrid : MonoBehaviour
     }
     #endregion
 
-    //estaria bueno una funcion que me diga en que bucket estoy
-    //quienes son mis neighbors
-    //y en Boid operar sobre solo ellos
+    //1. hacer que la comida no muera del grid
+    //grid entities se deberian agregar a la matriz cuando nacen, y quitarse cuando mueren. 
 }

@@ -26,10 +26,14 @@ public class Boid : MonoBehaviour
 
     private Cazador _hunter;
 
+    GridEntity _myGridEntity;
+    IEnumerable<Boid> _myNeighbors;
+
     public static List<Boid> allBoids = new List<Boid>();
     private void Start()
     {
         _hunter = GameManager.Instance.hunter;
+        _myGridEntity = GetComponent<GridEntity>();
 
         allBoids.Add(this);
 
@@ -41,11 +45,21 @@ public class Boid : MonoBehaviour
     {
         CheckBounds();
         CheckCollision();
+        CheckNeighbors();
         Advance();
     }
     private void CheckBounds()
     {
         transform.position = GameManager.Instance.SetObjectBoundPosition(transform.position);
+    }
+
+    private void CheckNeighbors()
+    {
+        _myNeighbors = _myGridEntity.GetNearby(_viewRadius).Select(x => x.GetComponent<Boid>());
+        if (_myGridEntity.canCheck)
+        {
+            print(_myNeighbors.Count());
+        }
     }
     private void Advance()
     {
@@ -58,19 +72,23 @@ public class Boid : MonoBehaviour
         else
         {
             Collider[] colliders = Physics.OverlapSphere(transform.position, _viewRadius, 1 << 7);
+            //esto por con un WHERE FOOD COLLIDER IS IN BUCKET(MYBUCKET)
+            //var comidasEnGrid GameManager.Instance.spatialGrid.Query(transform.position, _viewRadius, x => true);
             //en vez de overlap, usar solo los que me corresponden segun spatialgrid
+
 
             if (colliders.Length > 0)
                 AddForce(Arrive(colliders[0].transform)); //arrive es para la comida
             else
-                AddForce(GetSeparation(allBoids,this,_viewRadiusSeparation,CalculateSteering) * _separationWeight + 
-                    GetAlignment(allBoids, this, _viewRadius, CalculateSteering) * _alignWeight + 
-                    GetCohesion(allBoids, this, _viewRadius, CalculateSteering) * _cohesionWeight);
+                AddForce(GetSeparation(_myNeighbors, this,_viewRadiusSeparation,CalculateSteering) * _separationWeight + 
+                    GetAlignment(_myNeighbors, this, _viewRadius, CalculateSteering) * _alignWeight + 
+                    GetCohesion(_myNeighbors, this, _viewRadius, CalculateSteering) * _cohesionWeight);
         }
 
         transform.position += _velocity * Time.deltaTime;
         transform.forward = _velocity;
     }
+
     private static Vector3 GetCohesion(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3, Vector3> CalculateSteering)
     {
         var desired = Vector3.zero;
@@ -111,6 +129,8 @@ public class Boid : MonoBehaviour
     } //IA2-P1
     private static Vector3 GetAlignment(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3,Vector3> CalculateSteering)
     {
+        //esto por con un WHERE FOOD COLLIDER IS IN BUCKET(MYBUCKET)
+
         Vector3 desired = boids
             .Where(x => x != currentBoid && Vector3.Distance(currentBoid.transform.position, x.transform.position) < viewRadius)
             .Select(x => x._velocity)

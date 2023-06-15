@@ -9,6 +9,7 @@ public class GameManager : Singleton<GameManager>
 
 
     public Cazador hunter;
+    public SpatialGrid spatialGrid;
 
     public float BoundHeight { get => boundHeight; set => boundHeight = value; }
     public float BoundWidth { get => boundWidth; set => boundWidth = value; }
