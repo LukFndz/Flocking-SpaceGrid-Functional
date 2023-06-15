@@ -2,6 +2,7 @@ using IA2;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Cazador : MonoBehaviour
 {
@@ -75,4 +76,6 @@ public class Cazador : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, _viewRadius);
     }
+
+
 }

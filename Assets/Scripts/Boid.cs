@@ -41,6 +41,8 @@ public class Boid : MonoBehaviour
         Vector3 random = new Vector3(UnityEngine.Random.Range(-1f, 1f), 0, UnityEngine.Random.Range(-1f, 1f));
 
         AddForce(random.normalized * _maxSpeed);
+
+        GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity);
     }
     private void Update()
     {
@@ -213,8 +215,11 @@ public class Boid : MonoBehaviour
         }
     }
 
-   
 
+    private void OnDestroy()
+    {
+        GameManager.Instance.spatialGrid.RemoveEntityFromGrid(_myGridEntity);
+    }
 
     private void OnDrawGizmosSelected()
     {

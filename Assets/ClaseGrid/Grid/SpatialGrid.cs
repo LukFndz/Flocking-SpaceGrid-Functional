@@ -187,70 +187,70 @@ public class SpatialGrid : MonoBehaviour
     public bool showLogs = true;
     private void OnDrawGizmos()
     {
-        var rows = Generate(z, curr => curr + cellHeight)
-                .Select(row => Tuple.Create(new Vector3(x, 0, row),
-                                            new Vector3(x + cellWidth * width, 0, row)));
+        //var rows = Generate(z, curr => curr + cellHeight)
+        //        .Select(row => Tuple.Create(new Vector3(x, 0, row),
+        //                                    new Vector3(x + cellWidth * width, 0, row)));
 
-        //equivalente de rows
-        /*for (int i = 0; i <= height; i++)
-        {
-            Gizmos.DrawLine(new Vector3(x, 0, z + cellHeight * i), new Vector3(x + cellWidth * width,0, z + cellHeight * i));
-        }*/
+        ////equivalente de rows
+        ///*for (int i = 0; i <= height; i++)
+        //{
+        //    Gizmos.DrawLine(new Vector3(x, 0, z + cellHeight * i), new Vector3(x + cellWidth * width,0, z + cellHeight * i));
+        //}*/
 
-        var cols = Generate(x, curr => curr + cellWidth)
-                   .Select(col => Tuple.Create(new Vector3(col, 0, z), new Vector3(col, 0, z + cellHeight * height)));
+        //var cols = Generate(x, curr => curr + cellWidth)
+        //           .Select(col => Tuple.Create(new Vector3(col, 0, z), new Vector3(col, 0, z + cellHeight * height)));
 
-        var allLines = rows.Take(width + 1).Concat(cols.Take(height + 1));
+        //var allLines = rows.Take(width + 1).Concat(cols.Take(height + 1));
 
-        foreach (var elem in allLines)
-        {
-            Gizmos.DrawLine(elem.Item1, elem.Item2);
-        }
+        //foreach (var elem in allLines)
+        //{
+        //    Gizmos.DrawLine(elem.Item1, elem.Item2);
+        //}
 
-        if (buckets == null || AreGizmosShutDown) return;
+        //if (buckets == null || AreGizmosShutDown) return;
 
-        var originalCol = GUI.color;
-        GUI.color = Color.red;
-        if (!activatedGrid) //los dibuja conectados todos con todos
-        {
-            IEnumerable<GridEntity> allElems = Enumerable.Empty<GridEntity>();
-            foreach (var elem in buckets)
-                allElems = allElems.Concat(elem);
+        //var originalCol = GUI.color;
+        //GUI.color = Color.red;
+        //if (!activatedGrid) //los dibuja conectados todos con todos
+        //{
+        //    IEnumerable<GridEntity> allElems = Enumerable.Empty<GridEntity>();
+        //    foreach (var elem in buckets)
+        //        allElems = allElems.Concat(elem);
 
-            int connections = 0;
-            foreach (var ent in allElems)
-            {
-                foreach (var neighbour in allElems.Where(x => x != ent))
-                {
-                    Gizmos.DrawLine(ent.transform.position, neighbour.transform.position);
-                    connections++;
-                }
-                if (showLogs)
-                    //Debug.Log("tengo " + connections + " conexiones por individuo");
-                    connections = 0;
-            }
-        }
-        else //los dibuja divididos por bucket
-        {
-            int connections = 0;
-            foreach (var elem in buckets)
-            {
-                foreach (var ent in elem)
-                {
-                    foreach (var n in elem.Where(x => x != ent))
-                    {
-                        Gizmos.DrawLine(ent.transform.position, n.transform.position);
-                        connections++;
-                    }
-                    if (showLogs)
-                        //Debug.Log("tengo " + connections + " conexiones por individuo");
-                        connections = 0;
-                }
-            }
-        }
+        //    int connections = 0;
+        //    foreach (var ent in allElems)
+        //    {
+        //        foreach (var neighbour in allElems.Where(x => x != ent))
+        //        {
+        //            Gizmos.DrawLine(ent.transform.position, neighbour.transform.position);
+        //            connections++;
+        //        }
+        //        if (showLogs)
+        //            //Debug.Log("tengo " + connections + " conexiones por individuo");
+        //            connections = 0;
+        //    }
+        //}
+        //else //los dibuja divididos por bucket
+        //{
+        //    int connections = 0;
+        //    foreach (var elem in buckets)
+        //    {
+        //        foreach (var ent in elem)
+        //        {
+        //            foreach (var n in elem.Where(x => x != ent))
+        //            {
+        //                Gizmos.DrawLine(ent.transform.position, n.transform.position);
+        //                connections++;
+        //            }
+        //            if (showLogs)
+        //                //Debug.Log("tengo " + connections + " conexiones por individuo");
+        //                connections = 0;
+        //        }
+        //    }
+        //}
 
-        GUI.color = originalCol;
-        showLogs = false;
+        //GUI.color = originalCol;
+        //showLogs = false;
     }
     #endregion
 }
