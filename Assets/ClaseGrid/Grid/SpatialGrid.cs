@@ -214,20 +214,20 @@ public class SpatialGrid : MonoBehaviour
         if (!activatedGrid) //los dibuja conectados todos con todos
         {
             IEnumerable<GridEntity> allElems = Enumerable.Empty<GridEntity>();
-            foreach(var elem in buckets)
+            foreach (var elem in buckets)
                 allElems = allElems.Concat(elem);
 
             int connections = 0;
             foreach (var ent in allElems)
             {
-                foreach(var neighbour in allElems.Where(x => x != ent))
+                foreach (var neighbour in allElems.Where(x => x != ent))
                 {
                     Gizmos.DrawLine(ent.transform.position, neighbour.transform.position);
                     connections++;
                 }
-                if(showLogs)
+                if (showLogs)
                     //Debug.Log("tengo " + connections + " conexiones por individuo");
-                connections = 0;
+                    connections = 0;
             }
         }
         else //los dibuja divididos por bucket
@@ -235,16 +235,16 @@ public class SpatialGrid : MonoBehaviour
             int connections = 0;
             foreach (var elem in buckets)
             {
-                foreach(var ent in elem)
+                foreach (var ent in elem)
                 {
                     foreach (var n in elem.Where(x => x != ent))
                     {
                         Gizmos.DrawLine(ent.transform.position, n.transform.position);
                         connections++;
                     }
-                    if(showLogs)
+                    if (showLogs)
                         //Debug.Log("tengo " + connections + " conexiones por individuo");
-                    connections = 0;
+                        connections = 0;
                 }
             }
         }
@@ -253,7 +253,4 @@ public class SpatialGrid : MonoBehaviour
         showLogs = false;
     }
     #endregion
-
-    //1. hacer que la comida no muera del grid
-    //grid entities se deberian agregar a la matriz cuando nacen, y quitarse cuando mueren. 
 }

@@ -27,6 +27,7 @@ public class Boid : MonoBehaviour
     private Cazador _hunter;
 
     GridEntity _myGridEntity;
+    IEnumerable<GridEntity> _entities;
     IEnumerable<Boid> _myNeighbors;
 
     public static List<Boid> allBoids = new List<Boid>();
@@ -45,38 +46,28 @@ public class Boid : MonoBehaviour
     {
         CheckBounds();
         CheckCollision();
-        _myNeighbors = CheckNeighbors(_myGridEntity, _viewRadius);
-        //_myNeighbors = CheckClosestNeighbors(_myGridEntity, _viewRadius, 5); //no esta en uso pero puede llegar a servir
-        
-        //if (_myGridEntity.canCheck)
-        //{
-        //    for (int i = 0; i < 3; i++)
-        //    {
-        //        print(_myNeighbors.Skip(i).Select(x => x.transform).First().name);
-        //    }
-        //}
-
+        _entities = _myGridEntity.GetNearbyEntities(_viewRadius);
+        _myNeighbors = GetNeighbors(_entities);
         Advance();
     }
     private void CheckBounds()
     {
         transform.position = GameManager.Instance.SetObjectBoundPosition(transform.position);
     }
-
-    private IEnumerable<Boid> CheckNeighbors(GridEntity myGridEntity, float radius)
+    public IEnumerable<Boid> GetNeighbors(IEnumerable<GridEntity> ents)
     {
-        return myGridEntity.GetNearby(radius).Select(x => x.GetComponent<Boid>());
+        return ents
+             .Where(x => x.GetComponent<Boid>() != null)
+            .Select(x => x.GetComponent<Boid>());
     } //IA2-P1
-
     private IEnumerable<Boid> CheckClosestNeighbors(GridEntity myGridEntity, float radius, int neighborAmount)
     {
-        return myGridEntity.GetNearby(radius)
+        return myGridEntity.GetNearbyEntities(radius)
             .Select(x => x.GetComponent<Boid>())
             .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
             .Take(neighborAmount);
 
     } //IA2-P1
-
 
     private void Advance()
     {
@@ -89,16 +80,12 @@ public class Boid : MonoBehaviour
         else
         {
             Collider[] colliders = Physics.OverlapSphere(transform.position, _viewRadius, 1 << 7);
-            //esto por con un WHERE FOOD COLLIDER IS IN BUCKET(MYBUCKET)
-            //var comidasEnGrid GameManager.Instance.spatialGrid.Query(transform.position, _viewRadius, x => true);
-            //en vez de overlap, usar solo los que me corresponden segun spatialgrid
-
 
             if (colliders.Length > 0)
                 AddForce(Arrive(colliders[0].transform)); //arrive es para la comida
             else
-                AddForce(GetSeparation(_myNeighbors, this,_viewRadiusSeparation,CalculateSteering) * _separationWeight + 
-                    GetAlignment(_myNeighbors, this, _viewRadius, CalculateSteering) * _alignWeight + 
+                AddForce(GetSeparation(_myNeighbors, this, _viewRadiusSeparation, CalculateSteering) * _separationWeight +
+                    GetAlignment(_myNeighbors, this, _viewRadius, CalculateSteering) * _alignWeight +
                     GetCohesion(_myNeighbors, this, _viewRadius, CalculateSteering) * _cohesionWeight);
         }
 
@@ -225,6 +212,9 @@ public class Boid : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+   
+
 
     private void OnDrawGizmosSelected()
     {
