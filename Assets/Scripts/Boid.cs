@@ -81,10 +81,11 @@ public class Boid : MonoBehaviour
         }
         else
         {
-            Collider[] colliders = Physics.OverlapSphere(transform.position, _viewRadius, 1 << 7);
+            IEnumerable<Food> nearbyFoods = GetNearbyFoods(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
+            Food nearestFood = GetClosestFood(nearbyFoods);
 
-            if (colliders.Length > 0)
-                AddForce(Arrive(colliders[0].transform)); //arrive es para la comida
+            if (nearestFood != null)
+                AddForce(Arrive(nearestFood.transform)); //arrive es para la comida
             else
                 AddForce(GetSeparation(_myNeighbors, this, _viewRadiusSeparation, CalculateSteering) * _separationWeight +
                     GetAlignment(_myNeighbors, this, _viewRadius, CalculateSteering) * _alignWeight +
@@ -95,6 +96,20 @@ public class Boid : MonoBehaviour
         transform.forward = _velocity;
     }
 
+    public IEnumerable<Food> GetNearbyFoods(IEnumerable<GridEntity> ents)
+    {
+        return ents
+             .Where(x => x.GetComponent<Food>() != null)
+            .Select(x => x.GetComponent<Food>());
+    } //IA2-P1
+
+    public Food GetClosestFood(IEnumerable<Food> foods)
+    {
+        return foods
+             .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
+             .DefaultIfEmpty(null)
+             .First();
+    }
     private static Vector3 GetCohesion(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3, Vector3> CalculateSteering)
     {
         var desired = Vector3.zero;
