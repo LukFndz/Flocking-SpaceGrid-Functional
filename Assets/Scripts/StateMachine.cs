@@ -11,12 +11,12 @@ public class StateMachine : MonoBehaviour //IA2-P3
 
     public Cazador _hunter;
 
-    GridEntity myGridEntity;
+    GridEntity _myGridEntity;
 
     private void Start()
     {
-        myGridEntity = GetComponent<GridEntity>();
-        GameManager.Instance.spatialGrid.AddEntityToGrid(myGridEntity);
+        _myGridEntity = GetComponent<GridEntity>();
+        GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity);
 
 
         var idle = new State<HunterStates>("IdleState");
@@ -62,13 +62,12 @@ public class StateMachine : MonoBehaviour //IA2-P3
 
         patrol.OnUpdate += () =>
         {
-            Collider[] colliders = Physics.OverlapSphere(_hunter.transform.position, _hunter.ViewRadius, 1 << 6); //aca cambiar x query
-            IEnumerable<Boid> nearbyBoids =  GetNeighbors(myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
+            IEnumerable<Boid> nearbyBoids =  GetNeighbors(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
+            Boid nearestBoid = GetClosestBoid(nearbyBoids);
 
-
-            if (colliders.Length > 0)
+            if (nearestBoid != null)
             {
-                _hunter.Target = colliders[0].transform.parent.root.gameObject.GetComponent<Boid>(); //aca elegir el mas cercano
+                _hunter.Target = nearestBoid; //aca elegir el mas cercano
                 SendInputToFSM(HunterStates.Chase);
             }
             else
@@ -182,15 +181,18 @@ public class StateMachine : MonoBehaviour //IA2-P3
             .Select(x => x.GetComponent<Boid>());
     } //IA2-P1
 
-    //public Boid GetClosestBoid(IEnumerable<Boid> boids)
-    //{
-    //    return boids
-    //         .OrderBy();
-    //} //IA2-P1
+    public Boid GetClosestBoid(IEnumerable<Boid> boids)
+    {
+        return boids
+             .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
+             .DefaultIfEmpty(null)
+             .First();
+             
+    }
 
     private void OnDestroy()
     {
-        GameManager.Instance.spatialGrid.RemoveEntityFromGrid(myGridEntity);
+        GameManager.Instance.spatialGrid.RemoveEntityFromGrid(_myGridEntity);
     }
 
 
