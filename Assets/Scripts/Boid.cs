@@ -45,7 +45,17 @@ public class Boid : MonoBehaviour
     {
         CheckBounds();
         CheckCollision();
-        CheckNeighbors();
+        _myNeighbors = CheckNeighbors(_myGridEntity, _viewRadius);
+        //_myNeighbors = CheckClosestNeighbors(_myGridEntity, _viewRadius, 5); //no esta en uso pero puede llegar a servir
+        
+        //if (_myGridEntity.canCheck)
+        //{
+        //    for (int i = 0; i < 3; i++)
+        //    {
+        //        print(_myNeighbors.Skip(i).Select(x => x.transform).First().name);
+        //    }
+        //}
+
         Advance();
     }
     private void CheckBounds()
@@ -53,14 +63,21 @@ public class Boid : MonoBehaviour
         transform.position = GameManager.Instance.SetObjectBoundPosition(transform.position);
     }
 
-    private void CheckNeighbors()
+    private IEnumerable<Boid> CheckNeighbors(GridEntity myGridEntity, float radius)
     {
-        _myNeighbors = _myGridEntity.GetNearby(_viewRadius).Select(x => x.GetComponent<Boid>());
-        if (_myGridEntity.canCheck)
-        {
-            print(_myNeighbors.Count());
-        }
-    }
+        return myGridEntity.GetNearby(radius).Select(x => x.GetComponent<Boid>());
+    } //IA2-P1
+
+    private IEnumerable<Boid> CheckClosestNeighbors(GridEntity myGridEntity, float radius, int neighborAmount)
+    {
+        return myGridEntity.GetNearby(radius)
+            .Select(x => x.GetComponent<Boid>())
+            .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
+            .Take(neighborAmount);
+
+    } //IA2-P1
+
+
     private void Advance()
     {
         Vector3 hunterDistance = _hunter.transform.position - transform.position;
