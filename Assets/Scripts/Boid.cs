@@ -26,27 +26,51 @@ public class Boid : MonoBehaviour
 
     private Cazador _hunter;
 
+    GridEntity _myGridEntity;
+    IEnumerable<GridEntity> _entities;
+    IEnumerable<Boid> _myNeighbors;
+
     public static List<Boid> allBoids = new List<Boid>();
     private void Start()
     {
         _hunter = GameManager.Instance.hunter;
+        _myGridEntity = GetComponent<GridEntity>();
 
         allBoids.Add(this);
 
         Vector3 random = new Vector3(UnityEngine.Random.Range(-1f, 1f), 0, UnityEngine.Random.Range(-1f, 1f));
 
         AddForce(random.normalized * _maxSpeed);
+
+        GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity);
     }
     private void Update()
     {
         CheckBounds();
         CheckCollision();
+        _entities = _myGridEntity.GetNearbyEntities(_viewRadius);
+        _myNeighbors = GetNeighbors(_entities);
         Advance();
     }
     private void CheckBounds()
     {
         transform.position = GameManager.Instance.SetObjectBoundPosition(transform.position);
     }
+    public IEnumerable<Boid> GetNeighbors(IEnumerable<GridEntity> ents)
+    {
+        return ents
+             .Where(x => x.GetComponent<Boid>() != null)
+            .Select(x => x.GetComponent<Boid>());
+    } //IA2-P1
+    private IEnumerable<Boid> CheckClosestNeighbors(GridEntity myGridEntity, float radius, int neighborAmount)
+    {
+        return myGridEntity.GetNearbyEntities(radius)
+            .Select(x => x.GetComponent<Boid>())
+            .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
+            .Take(neighborAmount);
+
+    } //IA2-P1
+
     private void Advance()
     {
         Vector3 hunterDistance = _hunter.transform.position - transform.position;
@@ -57,18 +81,34 @@ public class Boid : MonoBehaviour
         }
         else
         {
-            Collider[] colliders = Physics.OverlapSphere(transform.position, _viewRadius, 1 << 7);
+            IEnumerable<Food> nearbyFoods = GetNearbyFoods(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
+            Food nearestFood = GetClosestFood(nearbyFoods);
 
-            if (colliders.Length > 0)
-                AddForce(Arrive(colliders[0].transform));
+            if (nearestFood != null)
+                AddForce(Arrive(nearestFood.transform)); //arrive es para la comida
             else
-                AddForce(GetSeparation(allBoids,this,_viewRadiusSeparation,CalculateSteering) * _separationWeight + 
-                    GetAlignment(allBoids, this, _viewRadius, CalculateSteering) * _alignWeight + 
-                    GetCohesion(allBoids, this, _viewRadius, CalculateSteering) * _cohesionWeight);
+                AddForce(GetSeparation(_myNeighbors, this, _viewRadiusSeparation, CalculateSteering) * _separationWeight +
+                    GetAlignment(_myNeighbors, this, _viewRadius, CalculateSteering) * _alignWeight +
+                    GetCohesion(_myNeighbors, this, _viewRadius, CalculateSteering) * _cohesionWeight);
         }
 
         transform.position += _velocity * Time.deltaTime;
         transform.forward = _velocity;
+    }
+
+    public IEnumerable<Food> GetNearbyFoods(IEnumerable<GridEntity> ents)
+    {
+        return ents
+             .Where(x => x.GetComponent<Food>() != null)
+            .Select(x => x.GetComponent<Food>());
+    } //IA2-P1
+
+    public Food GetClosestFood(IEnumerable<Food> foods)
+    {
+        return foods
+             .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
+             .DefaultIfEmpty(null)
+             .First();
     }
     private static Vector3 GetCohesion(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3, Vector3> CalculateSteering)
     {
@@ -110,6 +150,8 @@ public class Boid : MonoBehaviour
     } //IA2-P1
     private static Vector3 GetAlignment(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3,Vector3> CalculateSteering)
     {
+        //esto por con un WHERE FOOD COLLIDER IS IN BUCKET(MYBUCKET)
+
         Vector3 desired = boids
             .Where(x => x != currentBoid && Vector3.Distance(currentBoid.transform.position, x.transform.position) < viewRadius)
             .Select(x => x._velocity)
@@ -186,6 +228,12 @@ public class Boid : MonoBehaviour
             allBoids.Remove(this);
             Destroy(gameObject);
         }
+    }
+
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.spatialGrid.RemoveEntityFromGrid(_myGridEntity);
     }
 
     private void OnDrawGizmosSelected()

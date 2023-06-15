@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class StateMachine : MonoBehaviour //IA2-P3
 {
@@ -10,8 +11,14 @@ public class StateMachine : MonoBehaviour //IA2-P3
 
     public Cazador _hunter;
 
-    private void Awake()
+    GridEntity _myGridEntity;
+
+    private void Start()
     {
+        _myGridEntity = GetComponent<GridEntity>();
+        GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity);
+
+
         var idle = new State<HunterStates>("IdleState");
         var patrol = new State<HunterStates>("PatrolState");
         var chase = new State<HunterStates>("ChaseState");
@@ -55,11 +62,12 @@ public class StateMachine : MonoBehaviour //IA2-P3
 
         patrol.OnUpdate += () =>
         {
-            Collider[] colliders = Physics.OverlapSphere(_hunter.transform.position, _hunter.ViewRadius, 1 << 6);
+            IEnumerable<Boid> nearbyBoids =  GetNeighbors(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
+            Boid nearestBoid = GetClosestBoid(nearbyBoids);
 
-            if (colliders.Length > 0)
+            if (nearestBoid != null)
             {
-                _hunter.Target = colliders[0].transform.parent.root.gameObject.GetComponent<Boid>();
+                _hunter.Target = nearestBoid; //aca elegir el mas cercano
                 SendInputToFSM(HunterStates.Chase);
             }
             else
@@ -88,7 +96,7 @@ public class StateMachine : MonoBehaviour //IA2-P3
                 return;
             }
 
-            Advance();
+            Advance(); //perseguir boids
             CheckStamina();
         };
 
@@ -123,7 +131,6 @@ public class StateMachine : MonoBehaviour //IA2-P3
 
         return steering;
     }
-
     private Vector3 PursuitBoids()
     {
         Vector3 futurePos = _hunter.Target.transform.position + _hunter.Target.GetVelocity();
@@ -140,8 +147,6 @@ public class StateMachine : MonoBehaviour //IA2-P3
 
         return steering;
     }
-
-
     public void Advance()
     {
         Vector3 boidDistance = _hunter.Target.transform.position - _hunter.transform.position;
@@ -154,12 +159,10 @@ public class StateMachine : MonoBehaviour //IA2-P3
         _hunter.transform.position += _hunter.Velocity * Time.deltaTime;
         _hunter.transform.forward = _hunter.Velocity;
     }
-
     public void Rest()
     {
         SendInputToFSM(HunterStates.Idle);
     }
-
     public void CheckStamina()
     {
         _hunter.CurrentStamina = _hunter.CurrentStamina - Time.deltaTime;
@@ -167,11 +170,31 @@ public class StateMachine : MonoBehaviour //IA2-P3
         if (_hunter.CurrentStamina <= 0 && !_hunter.IsResting)
             Rest();
     }
-
     private void Update()
     {
         _myFsm.Update();
     }
+    public IEnumerable<Boid> GetNeighbors(IEnumerable<GridEntity> ents)
+    {
+        return ents
+             .Where(x => x.GetComponent<Boid>() != null)
+            .Select(x => x.GetComponent<Boid>());
+    } //IA2-P1
+
+    public Boid GetClosestBoid(IEnumerable<Boid> boids)
+    {
+        return boids
+             .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
+             .DefaultIfEmpty(null)
+             .First();
+             
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.Instance.spatialGrid.RemoveEntityFromGrid(_myGridEntity);
+    }
+
 
 
 }
