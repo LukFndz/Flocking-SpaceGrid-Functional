@@ -82,7 +82,7 @@ public class Boid : MonoBehaviour
         else
         {
             IEnumerable<Food> nearbyFoods = GetNearbyFoods(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
-            Food nearestFood = GetClosestFood(nearbyFoods, transform);
+            Food nearestFood = GetClosestFood(nearbyFoods);
 
             if (nearestFood != null)
                 AddForce(Arrive(nearestFood.transform)); //arrive es para la comida
@@ -103,7 +103,7 @@ public class Boid : MonoBehaviour
             .Select(x => x.GetComponent<Food>());
     } //IA2-P1
 
-    public static Food GetClosestFood(IEnumerable<Food> foods, Transform transform)
+    public Food GetClosestFood(IEnumerable<Food> foods)
     {
         return foods
              .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
