@@ -6,6 +6,9 @@ using System;
 
 public class Boid : MonoBehaviour
 {
+    //el script que maneja a los bodes
+    //por valentino roman
+
     private Vector3 _velocity;
 
     [SerializeField]private float _maxSpeed;
@@ -31,6 +34,7 @@ public class Boid : MonoBehaviour
     IEnumerable<Boid> _myNeighbors;
 
     public static List<Boid> allBoids = new List<Boid>();
+
     private void Start()
     {
         _hunter = GameManager.Instance.hunter;
@@ -39,10 +43,9 @@ public class Boid : MonoBehaviour
         allBoids.Add(this);
 
         Vector3 random = new Vector3(UnityEngine.Random.Range(-1f, 1f), 0, UnityEngine.Random.Range(-1f, 1f));
+        AddForce(random.normalized * _maxSpeed); //una velocidad inicial para que arranquen en alguna direccion
 
-        AddForce(random.normalized * _maxSpeed);
-
-        GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity);
+        GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity); //esto es para q la spatialgrid conozca a todos los boids
     }
     private void Update()
     {
@@ -56,23 +59,29 @@ public class Boid : MonoBehaviour
     {
         transform.position = GameManager.Instance.SetObjectBoundPosition(transform.position);
     }
+
+
     public IEnumerable<Boid> GetNeighbors(IEnumerable<GridEntity> ents)
     {
         return ents
              .Where(x => x.GetComponent<Boid>() != null)
             .Select(x => x.GetComponent<Boid>());
-    } //IA2-P1
+    } //IA2-LINQ
+
+
     private IEnumerable<Boid> CheckClosestNeighbors(GridEntity myGridEntity, float radius, int neighborAmount)
     {
         return myGridEntity.GetNearbyEntities(radius)
-            .Select(x => x.GetComponent<Boid>())
+            .OfType<Boid>()
             .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
             .Take(neighborAmount);
 
-    } //IA2-P1
+    } //IA2-LINQ
+
 
     private void Advance()
     {
+        //calculo todos los vectores y steering behaviours
         Vector3 hunterDistance = _hunter.transform.position - transform.position;
 
         if (hunterDistance.magnitude <= _viewRadius)
@@ -81,7 +90,7 @@ public class Boid : MonoBehaviour
         }
         else
         {
-            IEnumerable<Food> nearbyFoods = GetNearbyFoods(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
+            List<Food> nearbyFoods = GetNearbyFoods(_myGridEntity.GetNearbyEntities(_hunter.ViewRadius));
             Food nearestFood = GetClosestFood(nearbyFoods, transform);
 
             if (nearestFood != null)
@@ -96,27 +105,38 @@ public class Boid : MonoBehaviour
         transform.forward = _velocity;
     }
 
-    public IEnumerable<Food> GetNearbyFoods(IEnumerable<GridEntity> ents)
-    {
-        return ents
-             .Where(x => x.GetComponent<Food>() != null)
-            .Select(x => x.GetComponent<Food>());
-    } //IA2-P1
 
-    public Food GetClosestFood(IEnumerable<Food> foods, Transform transform)  //IA2-P1
+    public List<Food> GetNearbyFoods(IEnumerable<GridEntity> ents)
+    {
+        if (ents.Any())
+        {
+            return ents
+                 .Where(x => x.GetComponent<Food>() != null)
+                .Select(x => x.GetComponent<Food>())
+                .ToList();
+
+        }
+        return new List<Food>();
+
+    } //IA2-LINQ
+
+
+    public Food GetClosestFood(IEnumerable<Food> foods, Transform transform)
     {
         return foods
              .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
              .DefaultIfEmpty(null)
              .First();
-    }
+    }//IA2-LINQ
+
+
     private static Vector3 GetCohesion(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3, Vector3> CalculateSteering)
     {
+        //promedio las posiciones de los boids cercanos y me dirijo a ese promedio
         var desired = Vector3.zero;
         var count = 0;
 
         desired = boids.Where(x => x != currentBoid)
-            //.Where(boid => Vector3.Distance(transform.position, boid.transform.position) <= _viewRadius)
                         .Aggregate(desired, (x, y) =>
                         {
                             if (Vector3.Distance(currentBoid.transform.position, y.transform.position) <= viewRadius)
@@ -134,8 +154,11 @@ public class Boid : MonoBehaviour
 
         return CalculateSteering(desired);
     } //IA2-P1
+
+
     private static Vector3 GetSeparation(IEnumerable<Boid> boids, Boid currentBoid, float viewRadiusSeparation, Func<Vector3, Vector3> CalculateSteering)
     {
+        //promedio las posiciones de los boids cercanos menores a viewradiusseparation y me alejo de ese promedio
         Vector3 desired = boids.Where(x => x != currentBoid)
                                     .Select(x => x.transform.position - currentBoid.transform.position)
                                     .Where(x => x.magnitude < viewRadiusSeparation)
@@ -148,20 +171,22 @@ public class Boid : MonoBehaviour
 
         return CalculateSteering(desired);
     } //IA2-P1
+
+
     private static Vector3 GetAlignment(IEnumerable<Boid> boids, Boid currentBoid, float viewRadius, Func<Vector3,Vector3> CalculateSteering)
     {
-        //esto por con un WHERE FOOD COLLIDER IS IN BUCKET(MYBUCKET)
-
+        //promedio las velocidades de los boids cercanos para alinearme a ellas
         Vector3 desired = boids
             .Where(x => x != currentBoid && Vector3.Distance(currentBoid.transform.position, x.transform.position) < viewRadius)
             .Select(x => x._velocity)
-            .Aggregate(Vector3.zero, (x, y) => x + y);
+            .Aggregate(Vector3.zero, (x, y) => x + y); 
 
         int count = boids
             .Count(boid => boid != currentBoid && Vector3.Distance(currentBoid.transform.position, boid.transform.position) < viewRadius);
 
         return count == 0 ? desired : CalculateSteering(desired / count);
     } //IA2-P1
+
 
     private void Evade()
     {

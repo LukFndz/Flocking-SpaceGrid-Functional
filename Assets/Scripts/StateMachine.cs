@@ -18,24 +18,24 @@ public class StateMachine : MonoBehaviour //IA2-P3
         _myGridEntity = GetComponent<GridEntity>();
         GameManager.Instance.spatialGrid.AddEntityToGrid(_myGridEntity);
 
-
         var idle = new State<HunterStates>("IdleState");
         var patrol = new State<HunterStates>("PatrolState");
         var chase = new State<HunterStates>("ChaseState");
 
         StateConfigurer.Create(idle)
            .SetTransition(HunterStates.Patrol, patrol)
-           .Done(); //aplico y asigno
+           .SetTransition(HunterStates.Chase, chase)
+           .Done(); 
 
         StateConfigurer.Create(patrol)
            .SetTransition(HunterStates.Chase, chase)
-           .Done(); //aplico y asigno
+           .SetTransition(HunterStates.Idle, idle)
+           .Done();
 
         StateConfigurer.Create(chase)
            .SetTransition(HunterStates.Idle, idle)
            .SetTransition(HunterStates.Patrol, patrol)
-           .Done(); //aplico y asigno
-
+           .Done();
 
         float timer = 0;
 
@@ -59,6 +59,12 @@ public class StateMachine : MonoBehaviour //IA2-P3
             _hunter.IsResting = false;
             timer = 0;
         };
+
+        idle.GetTransition(HunterStates.Chase).OnTransition += x =>
+        {
+            _hunter.IsResting = false;
+        };
+
 
         patrol.OnUpdate += () =>
         {
@@ -88,6 +94,16 @@ public class StateMachine : MonoBehaviour //IA2-P3
             _hunter.transform.forward = _hunter.Velocity;
         };
 
+        patrol.GetTransition(HunterStates.Idle).OnTransition += x =>
+        {
+            _hunter.IsResting = true;
+        };
+
+        patrol.GetTransition(HunterStates.Chase).OnTransition += x =>
+        {
+            _hunter.IsResting = false;
+        };
+
         chase.OnUpdate += () =>
         {
             if (_hunter.Target == null)
@@ -104,6 +120,11 @@ public class StateMachine : MonoBehaviour //IA2-P3
         {
             _hunter.IsResting = true;
             _hunter.CurrentStamina = _hunter.Stamina;
+        };
+
+        chase.GetTransition(HunterStates.Patrol).OnTransition += x =>
+        {
+            _hunter.IsResting = false;
         };
 
 
@@ -179,7 +200,7 @@ public class StateMachine : MonoBehaviour //IA2-P3
         return ents
              .Where(x => x.GetComponent<Boid>() != null)
             .Select(x => x.GetComponent<Boid>());
-    } //IA2-P1
+    } //IA2-LINQ
 
     public Boid GetClosestBoid(IEnumerable<Boid> boids)
     {
@@ -187,14 +208,10 @@ public class StateMachine : MonoBehaviour //IA2-P3
              .OrderBy(x => Vector3.Distance(x.transform.position, transform.position))
              .DefaultIfEmpty(null)
              .First();
-             
-    }
+    }//IA2-LINQ
 
     private void OnDestroy()
     {
         GameManager.Instance.spatialGrid.RemoveEntityFromGrid(_myGridEntity);
     }
-
-
-
 }

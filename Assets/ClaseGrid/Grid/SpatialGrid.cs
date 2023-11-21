@@ -43,12 +43,10 @@ public class SpatialGrid : MonoBehaviour
         lastPositions = new Dictionary<GridEntity, Tuple<int, int>>();
         buckets = new HashSet<GridEntity>[width, height];
 
-        //creamos todos los iXj hashsets
         for (int i = 0; i < width; i++)
             for (int j = 0; j < height; j++)
                 buckets[i, j] = new HashSet<GridEntity>();
 
-        //P/alumnos: por que no usamos OfType<>() despues del RecursiveWalker() aca?
         var ents = RecursiveWalker(transform)
             .Select(x => x.GetComponent<GridEntity>())
             .Where(x => x != null);
@@ -134,14 +132,14 @@ public class SpatialGrid : MonoBehaviour
                 from.x <= e.transform.position.x && e.transform.position.x <= to.x &&    //filtro: los gridentity que estan entre from y to
                 from.z <= e.transform.position.z && e.transform.position.z <= to.z
             ).Where(x => filterByPosition(x.transform.position)); //filtro extra por si pinta. por ej la query circular
-    }
+    } //IA2-LINQ
 
     public Tuple<int, int> GetPositionInGrid(Vector3 pos) //devuelve en que bucket estoy (si el 0,0  0,1  1,0  o  1,1)
     {
         //quita la diferencia, divide segun las celdas y floorea
         return Tuple.Create(Mathf.FloorToInt((pos.x - x) / cellWidth),
                             Mathf.FloorToInt((pos.z - z) / cellHeight));
-    }
+    } //IA2-LINQ
 
     public bool IsInsideGrid(Tuple<int, int> position)
     {
@@ -149,7 +147,6 @@ public class SpatialGrid : MonoBehaviour
         return 0 <= position.Item1 && position.Item1 < width &&
             0 <= position.Item2 && position.Item2 < height;
     }
-
     void OnDestroy()
     {
         var ents = RecursiveWalker(transform).Select(x => x.GetComponent<GridEntity>()).Where(x => x != null);
@@ -170,13 +167,14 @@ public class SpatialGrid : MonoBehaviour
 
     IEnumerable<T> Generate<T>(T seed, Func<T, T> mutate)
     {
+        //para el ondrawgizmos y la creacion de celdas
         T accum = seed;
         while (true)
         {
             yield return accum;
             accum = mutate(accum);
         }
-    }
+    }//IA2-LINQ
     #endregion
 
     #endregion
@@ -200,7 +198,8 @@ public class SpatialGrid : MonoBehaviour
         var cols = Generate(x, curr => curr + cellWidth)
                    .Select(col => Tuple.Create(new Vector3(col, 0, z), new Vector3(col, 0, z + cellHeight * height)));
 
-        var allLines = rows.Take(width + 1).Concat(cols.Take(height + 1));
+        var allLines = rows.Take(width + 1)
+            .Concat(cols.Take(height + 1)); //IA2-LINQ
 
         foreach (var elem in allLines)
         {
@@ -251,6 +250,6 @@ public class SpatialGrid : MonoBehaviour
 
         GUI.color = originalCol;
         showLogs = false;
-    }
+    }//IA2-LINQ
     #endregion
 }
